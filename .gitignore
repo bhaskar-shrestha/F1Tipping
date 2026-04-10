@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+UI-web/node_modules/
+UI-mobile/node_modules/
+
+# Build outputs
+UI-web/build/
+UI-mobile/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Testing coverage
+coverage/
+coverage.txt
+
+# React Native
+UI-mobile/.expo/
+UI-mobile/.expo-shared/
+UI-mobile/jest.config.js
+UI-mobile/app.json
+UI-mobile/package-lock.json
+UI-mobile/yarn.lock
+UI-mobile/pnpm-lock.yaml
