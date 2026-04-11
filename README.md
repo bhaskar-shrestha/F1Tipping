@@ -9,6 +9,7 @@ A Formula 1 prediction/tipping web and mobile application where users select dri
 - **2026 F1 Rules**: Implements current F1 2026 points system
 - **Cross-Platform**: Web interface (React.js) and Mobile app (React Native)
 - **Admin Dashboard**: Manage drivers, teams, and race results
+- **Docker Support**: Full containerization for easy deployment
 
 ## Tech Stack
 
@@ -17,7 +18,7 @@ A Formula 1 prediction/tipping web and mobile application where users select dri
 | Web UI | React.js |
 | Mobile App | React Native |
 | Backend API | Go |
-| Database | PostgreSQL |
+| Containerization | Docker |
 
 ## Project Structure
 
@@ -44,11 +45,30 @@ F1Tipping/
 
 ## Getting Started
 
+### Quick Start with Docker (Recommended)
+
+The easiest way to run the application is using Docker:
+
+```bash
+# Start all services
+docker-compose up
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+- Web UI: http://localhost
+- Backend API: http://localhost:8080
+
+See [DOCKER_README.md](DOCKER_README.md) for detailed Docker instructions.
+
 ### Prerequisites
 
-- Go 1.20+
-- Node.js 16+
-- npm 8+
+- Docker and Docker Compose
+- OR Go 1.20+, Node.js 16+, npm 8+ (for non-docker setup)
 
 ### Backend Setup
 

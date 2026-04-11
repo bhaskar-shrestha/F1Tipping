@@ -1,0 +1,31 @@
+# Docker Compose configuration for F1 Tipping App
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: f1-tipping-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    restart: unless-stopped
+    networks:
+      - f1-tipping-network
+
+  web:
+    build:
+      context: ./UI-web
+      dockerfile: Dockerfile
+    container_name: f1-tipping-web
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - f1-tipping-network
+
+networks:
+  f1-tipping-network:
+    driver: bridge
