@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+*.md
+CLAUDE.md
+
+# Development files
+node_modules
+npm-debug.log
+
+# Build output (will be copied in build stage)
+build/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
