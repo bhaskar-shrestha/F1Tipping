@@ -1,0 +1,16 @@
+# F1 Prediction App Code Owners
+
+# All pull requests require review
+* @team-maintainers
+
+# Backend code requires backend review
+backend/ @backend-team
+
+# Web UI code requires frontend review
+UI-web/ @frontend-team
+
+# Mobile UI code requires mobile review
+UI-mobile/ @mobile-team
+
+# Testing requires QA review
+testing/ @qa-team
