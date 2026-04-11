@@ -1,6 +1,8 @@
 package services
 
-import "fmt"
+import (
+	"github.com/f1tipping/backend/src/models"
+)
 
 // F1 2026 Points Rules
 
@@ -10,47 +12,36 @@ var SprintPoints = []int{8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 // RacePoints returns points for race positions (top 10 finishers)
 // Position 1-10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 points
-var RacePoints = []int{25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var RacePoints = []int{25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-// Constants
-const (
-	SPRINT_POINTS = SprintPoints
-	RACE_POINTS   = RacePoints
-)
-
-// calculatePoints calculates points for a list of driver IDs based on their positions
-func calculatePoints(driverIDs []string, positions map[string]int, points []int) int {
+// CalculateDriverPoints calculates points for a list of driver IDs based on their positions
+func CalculateDriverPoints(driverIDs []string, positions map[string]int, points []int) int {
 	total := 0
 	for _, driverID := range driverIDs {
-		pos := positions[driverID]
+		pos, ok := positions[driverID]
+		if !ok {
+			continue
+		}
 		total += points[pos]
 	}
 	return total
 }
 
-// calculateTeamPoints calculates points for a list of team IDs based on both cars' positions
-func calculateTeamPoints(teamIDs []string, teams map[string]*models.Team, points []int) int {
+// CalculateTeamPoints calculates points for a list of team IDs based on both cars' positions
+func CalculateTeamPoints(teamIDs []string, teamMap map[string]struct{
+	Car1 int `json:"car1"`
+	Car2 int `json:"car2"`
+}, points []int) int {
 	total := 0
 	for _, teamID := range teamIDs {
-		team, ok := teams[teamID]
+		team, ok := teamMap[teamID]
 		if !ok {
 			continue
 		}
 
-		// Get positions for both cars (or single position if available)
-		var car1Pos int = 0
-		if team.RaceCar1Position != nil {
-			car1Pos = *team.RaceCar1Position
-		} else if team.RaceCar2Position != nil {
-			car1Pos = *team.RaceCar2Position
-		}
-
-		var car2Pos int = 0
-		if team.RaceCar2Position != nil {
-			car2Pos = *team.RaceCar2Position
-		} else if team.RaceCar1Position != nil {
-			car2Pos = *team.RaceCar1Position
-		}
+		// Get positions for both cars
+		car1Pos := team.Car1
+		car2Pos := team.Car2
 
 		total += points[car1Pos]
 		total += points[car2Pos]
@@ -58,7 +49,18 @@ func calculateTeamPoints(teamIDs []string, teams map[string]*models.Team, points
 	return total
 }
 
-// predictionID generates a prediction ID from user ID
-func predictionID(userID string) string {
-	return fmt.Sprintf("pred_%s", userID)
+// CalculatePointsForPrediction calculates total points for a prediction
+func CalculatePointsForPrediction(pred *models.Prediction, driverPositions map[string]int, teamPositions map[string]struct{
+	Car1 int `json:"car1"`
+	Car2 int `json:"car2"`
+}) (sprintPoints, racePoints, totalPoints int) {
+	// Calculate driver points
+	driveSprint := CalculateDriverPoints(pred.DriverIDs, driverPositions, SprintPoints)
+	driveRace := CalculateDriverPoints(pred.DriverIDs, driverPositions, RacePoints)
+
+	// Calculate team points
+	teamSprint := CalculateTeamPoints(pred.TeamIDs, teamPositions, SprintPoints)
+	teamRace := CalculateTeamPoints(pred.TeamIDs, teamPositions, RacePoints)
+
+	return driveSprint + teamSprint, driveRace + teamRace, (driveSprint + teamSprint) + (driveRace + teamRace)
 }

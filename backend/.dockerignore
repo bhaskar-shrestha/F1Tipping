@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vscode
+.idea
+.env
+.env.local
+UI-mobile/
+UI-web/
+.DS_Store
+Thumbs.db

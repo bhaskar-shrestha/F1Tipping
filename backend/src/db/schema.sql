@@ -6,7 +6,12 @@ CREATE TABLE IF NOT EXISTS constructors (
     id SERIAL PRIMARY KEY,
     constructor_id VARCHAR(50) UNIQUE NOT NULL,
     constructor_name VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    race_car1_position INTEGER,
+    race_car2_position INTEGER,
+    sprint_car1_position INTEGER,
+    sprint_car2_position INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Drivers table
@@ -14,7 +19,7 @@ CREATE TABLE IF NOT EXISTS drivers (
     id SERIAL PRIMARY KEY,
     driver_id VARCHAR(50) UNIQUE NOT NULL,
     driver_name VARCHAR(100) NOT NULL,
-    constructor_id INTEGER REFERENCES constructors(id),
+    constructor_id INTEGER REFERENCES constructors(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -48,6 +53,9 @@ CREATE TABLE IF NOT EXISTS race_results (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_drivers_constructor ON drivers(constructor_id);
-CREATE INDEX idx_sprint_results_position ON sprint_results(position);
-CREATE INDEX idx_race_results_position ON race_results(position);
+CREATE INDEX IF NOT EXISTS idx_drivers_constructor ON drivers(constructor_id);
+CREATE INDEX IF NOT EXISTS idx_sprint_results_position ON sprint_results(position);
+CREATE INDEX IF NOT EXISTS idx_race_results_position ON race_results(position);
+CREATE INDEX IF NOT EXISTS idx_predictions_user ON predictions(user_id);
+CREATE INDEX IF NOT EXISTS idx_predictions_submit ON predictions(submit_time);
+CREATE INDEX IF NOT EXISTS idx_constructors_id ON constructors(id);
