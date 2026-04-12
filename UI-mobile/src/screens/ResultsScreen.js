@@ -10,7 +10,8 @@ export default function ResultsScreen() {
 
   const fetchResults = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/predictions/user/my-user');
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+      const response = await fetch(`${API_URL}/api/predictions/user/my-user`);
       const data = await response.json();
       setResults(Array.isArray(data) ? data : []);
     } catch (error) {
