@@ -67,22 +67,13 @@ func (r *TeamRepository) GetByID(id string) (*models.Team, error) {
 
 // Create inserts a new team
 func (r *TeamRepository) Create(team *models.Team) error {
-	result, err := r.db.Exec(
+	err := r.db.QueryRow(
 		"INSERT INTO constructors (constructor_id, constructor_name) VALUES ($1, $2) RETURNING constructor_id, constructor_name",
 		team.ConstructorID, team.ConstructorName,
-	)
+	).Scan(&team.ConstructorID, &team.ConstructorName)
 	if err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("team insert failed: no rows affected")
-	}
-
 	return nil
 }
 
