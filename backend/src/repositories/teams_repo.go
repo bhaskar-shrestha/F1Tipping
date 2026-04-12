@@ -141,10 +141,10 @@ func (r *TeamRepository) GetTeamWithPositions(constructorID string) (*models.Tea
 
 	err := r.db.QueryRow(
 		`SELECT constructor_id, constructor_name,
-			COALESCE(race_car1_position, 0) as race_c1,
-			COALESCE(race_car2_position, 0) as race_c2,
-			COALESCE(sprint_car1_position, 0) as sprint_c1,
-			COALESCE(sprint_car2_position, 0) as sprint_c2
+			race_car1_position,
+			race_car2_position,
+			sprint_car1_position,
+			sprint_car2_position
 		FROM constructors WHERE constructor_id = $1`,
 		constructorID,
 	).Scan(&constructorIDStr, &name, &car1Pos, &car2Pos, &sprintCar1Pos, &sprintCar2Pos)
