@@ -60,22 +60,13 @@ func (r *DriverRepository) GetByID(id string) (*models.Driver, error) {
 
 // Create inserts a new driver
 func (r *DriverRepository) Create(driver *models.Driver) error {
-	result, err := r.db.Exec(
+	err := r.db.QueryRow(
 		"INSERT INTO drivers (driver_id, driver_name, constructor_id) VALUES ($1, $2, $3) RETURNING driver_id, driver_name, constructor_id",
 		driver.ID, driver.Name, driver.ConstructorID,
-	)
+	).Scan(&driver.ID, &driver.Name, &driver.ConstructorID)
 	if err != nil {
 		return fmt.Errorf("failed to create driver: %w", err)
 	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("driver insert failed: no rows affected")
-	}
-
 	return nil
 }
 
