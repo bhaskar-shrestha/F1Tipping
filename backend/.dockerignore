@@ -8,3 +8,20 @@ UI-mobile/
 UI-web/
 .DS_Store
 Thumbs.db
+
+# Tests
+*_test.go
+testing/
+test/
+tests/
+
+# Documentation
+*.md
+
+# Local build artifacts
+bin/
+build/
+dist/
+out/
+coverage/
+*.out
