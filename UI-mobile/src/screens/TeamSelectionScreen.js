@@ -15,8 +15,11 @@ export default function TeamSelectionScreen({ navigation }) {
     try {
       const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
       const response = await fetch(`${API_URL}/api/admin/teams`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
-      setTeams(data);
+      setTeams(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading teams:', error);
       // Fallback mock data
