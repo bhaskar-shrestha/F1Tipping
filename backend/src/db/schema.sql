@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS drivers (
 -- PREDICTIONS TABLE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS predictions (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(50) PRIMARY KEY,
     user_id VARCHAR(100) NOT NULL,
     submit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     sprint_points INTEGER DEFAULT 0,

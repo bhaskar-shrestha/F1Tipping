@@ -31,7 +31,8 @@ func (r *PredictionsRepository) Create(prediction *models.Prediction) error {
 	}
 
 	result, err := r.db.Exec(
-		"INSERT INTO predictions (user_id, submit_time, sprint_points, race_points, total_points, driver_ids, team_ids) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, submit_time, sprint_points, race_points, total_points",
+		"INSERT INTO predictions (id, user_id, submit_time, sprint_points, race_points, total_points, driver_ids, team_ids) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		prediction.ID,
 		prediction.UserID,
 		prediction.SubmitTime,
 		prediction.SprintPoints,
@@ -157,9 +158,9 @@ func (r *PredictionsRepository) GetByUserAndTime(userID string, submitTime time.
 	var driverIDs, teamIDs sql.NullString
 
 	err := r.db.QueryRow(
-		"SELECT user_id, submit_time, sprint_points, race_points, total_points, driver_ids, team_ids FROM predictions WHERE user_id = $1 AND submit_time = $2",
+		"SELECT id, user_id, submit_time, sprint_points, race_points, total_points, driver_ids, team_ids FROM predictions WHERE user_id = $1 AND submit_time = $2",
 		userID, submitTime,
-	).Scan(&p.UserID, &p.SubmitTime, &sprintPoints, &racePoints, &totalPoints, &driverIDs, &teamIDs)
+	).Scan(&p.ID, &p.UserID, &p.SubmitTime, &sprintPoints, &racePoints, &totalPoints, &driverIDs, &teamIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get prediction by user and time: %w", err)
 	}
