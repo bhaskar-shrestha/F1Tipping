@@ -415,8 +415,8 @@ func initRoutes() {
 		}
 	})
 
-	// User handlers
-	http.HandleFunc("/api/predictions", func(w http.ResponseWriter, r *http.Request) {
+	// User handlers - both patterns to handle /api/predictions and /api/predictions/...
+	predictionHandler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			userGetPrediction(w, r)
@@ -425,7 +425,11 @@ func initRoutes() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}
+	// Match exact path without trailing slash
+	http.HandleFunc("/api/predictions", predictionHandler)
+	// Match with trailing slash and subpaths
+	http.HandleFunc("/api/predictions/", predictionHandler)
 }
 
 // Admin routes
@@ -457,6 +461,10 @@ func adminAddDriver(w http.ResponseWriter, r *http.Request) {
 
 	driver, err := Admin.AddDriver(input.Name, input.ConstructorID)
 	if err != nil {
+		if validationErr, ok := err.(services.ValidationError); ok {
+			http.Error(w, validationErr.Message, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to add driver: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -494,6 +502,10 @@ func adminAddTeam(w http.ResponseWriter, r *http.Request) {
 
 	team, err := Admin.AddTeam(input.ConstructorName)
 	if err != nil {
+		if validationErr, ok := err.(services.ValidationError); ok {
+			http.Error(w, validationErr.Message, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to add team: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -521,6 +533,10 @@ func adminUpdateRacePositions(w http.ResponseWriter, r *http.Request) {
 	car2 := input.Car2
 
 	if err := Admin.UpdateRacePositions(input.ConstructorID, &car1, &car2); err != nil {
+		if validationErr, ok := err.(services.ValidationError); ok {
+			http.Error(w, validationErr.Message, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to update positions: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -548,6 +564,10 @@ func adminUpdateSprintPositions(w http.ResponseWriter, r *http.Request) {
 	car2 := input.Car2
 
 	if err := Admin.UpdateSprintPositions(input.ConstructorID, &car1, &car2); err != nil {
+		if validationErr, ok := err.(services.ValidationError); ok {
+			http.Error(w, validationErr.Message, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to update positions: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -574,6 +594,10 @@ func userCreatePrediction(w http.ResponseWriter, r *http.Request) {
 
 	prediction, err := Preds.CreatePrediction(input.UserID, input.DriverIDs, input.TeamIDs)
 	if err != nil {
+		if validationErr, ok := err.(services.ValidationError); ok {
+			http.Error(w, validationErr.Message, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to create prediction: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -586,8 +610,12 @@ func userCreatePrediction(w http.ResponseWriter, r *http.Request) {
 }
 
 func userGetPrediction(w http.ResponseWriter, r *http.Request) {
-	// Extract the path after /api/predictions/
+	// Extract the path after /api/predictions (handle both with and without trailing slash)
 	path := strings.TrimPrefix(r.URL.Path, "/api/predictions/")
+	// If no trailing slash in pattern was matched, try trimming without trailing slash
+	if path == r.URL.Path {
+		path = strings.TrimPrefix(r.URL.Path, "/api/predictions")
+	}
 	
 	if path == "" {
 		http.Error(w, "Prediction ID or /user/:userId required", http.StatusBadRequest)

@@ -31,19 +31,19 @@ func NewPredictionService(predictionsRepo *repositories.PredictionsRepository) *
 func (s *PredictionService) CreatePrediction(userID string, driverIDs []string, teamIDs []string) (*models.Prediction, error) {
 	// Validate: exactly 5 drivers
 	if len(driverIDs) != 5 {
-		return nil, errors.New("must select exactly 5 drivers")
+		return nil, NewValidationError("must select exactly 5 drivers")
 	}
 
 	// Validate: exactly 2 teams
 	if len(teamIDs) != 2 {
-		return nil, errors.New("must select exactly 2 teams")
+		return nil, NewValidationError("must select exactly 2 teams")
 	}
 
 	// Check for duplicate driver IDs
 	driverSet := make(map[string]bool)
 	for _, id := range driverIDs {
 		if driverSet[id] {
-			return nil, errors.New("duplicate driver selected")
+			return nil, NewValidationError("duplicate driver selected")
 		}
 		driverSet[id] = true
 	}
@@ -52,7 +52,7 @@ func (s *PredictionService) CreatePrediction(userID string, driverIDs []string, 
 	teamSet := make(map[string]bool)
 	for _, id := range teamIDs {
 		if teamSet[id] {
-			return nil, errors.New("duplicate team selected")
+			return nil, NewValidationError("duplicate team selected")
 		}
 		teamSet[id] = true
 	}
@@ -96,7 +96,7 @@ func (s *PredictionService) CalculatePoints(userID string, driverResults map[str
 	}
 
 	if len(predictions) == 0 {
-		return errors.New("no predictions found for user")
+		return NewValidationError("no predictions found for user")
 	}
 
 	// Get the most recent prediction
