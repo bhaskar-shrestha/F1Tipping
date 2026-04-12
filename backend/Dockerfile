@@ -1,41 +1,45 @@
-# Backend Dockerfile - Multi-stage build for Go API
+# Backend Dockerfile - Multi-stage build for Go API with PostgreSQL
 
 # Stage 1: Build
 FROM golang:1.21-alpine AS builder
 
-WORKDIR /build
+WORKDIR /app
 
-# Install dependencies for CGO if needed
-RUN apk add --no-cache gcc musl-dev
+# Install necessary build packages
+RUN apk add --no-cache git ca-certificates
 
-# Copy go mod files
-COPY go.mod ./
-# Download dependencies (go.sum will be generated if it doesn't exist)
-RUN go mod download || true
+# Copy only go.mod and go.sum for dependency caching
+COPY go.mod go.sum ./
 
-# Copy source code
+# Cache Go module dependencies
+RUN go mod download && go mod graph
+
+# Copy all source-code
 COPY . .
 
-# Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./src/main.go
+# Build the binary with all Go build flags
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /app/main ./src/main.go
 
-# Stage 2: Runtime
-FROM alpine:3.19
+# Stage 2: Runtime  
+FROM alpine:latest
 
 WORKDIR /app
 
-# Install ca-certificates for HTTPS and curl for health checks
-RUN apk add --no-cache ca-certificates curl
+# Install runtime dependencies (ca-certificates for HTTPS, tzdata for timezone support)
+RUN apk add --no-cache ca-certificates tzdata
 
 # Copy binary from builder
-COPY --from=builder /build/main .
+COPY --from=builder /app/main ./main
 
-# Expose port
+# Copy database schema to expected location
+COPY src/db ./src/db
+
+# Set environment
+ENV GIN_MODE=release
+
 EXPOSE 8080
 
-# Run with PORT environment variable (default to 8080)
-ENV PORT=8080
-ENV GOOS=linux
-ENV GOARCH=amd64
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD [ "test", "-f", "/app/main" ]
 
 CMD ["./main"]

@@ -41,7 +41,34 @@ Teams accumulate points from both cars. No fastest lap bonus in 2026.
 
 ## Implementation Status
 
-**Status: COMPLETE** - All core features implemented
+**Status: COMPLETE** - All core features implemented and refined
+
+### Recent Refinements (April 2026)
+
+**Phase 1 - Schema Foundation**
+- Updated database schema with `races` table for 2026 F1 calendar management
+- Removed redundant `constructors.id` column (kept `constructor_id` as natural key)
+- Fixed foreign key references across all result tables
+- Seeded 2026 race calendar (28 races: 14 weekends × 2 types)
+- Schema now loaded from file (`schema.sql`) instead of hardcoded
+
+**Phase 2 - Go Models**
+- Removed redundant `ConstructorID` field from Team model (kept only `ID`)
+- Simplified result models: renamed `PositionResult` → `ConstructorPosition`
+- Unified race/sprint results into single `Positions[]` array structure
+- Added `race_id` field to result models for proper race context
+
+**Phase 3 - API Endpoints**
+- Added `GET /api/predictions/user/:userId` for querying user predictions
+- Implemented `POST /api/admin/race-positions` for updating race results
+- Implemented `POST /api/admin/sprint-positions` for updating sprint results
+- All endpoints return consistent snake_case JSON fields
+
+**Phase 4 - Frontend Updates**
+- Web UI: Fixed API endpoint paths and field name mappings
+- Mobile UI: Connected DriverSelectionScreen, TeamSelectionScreen, ResultsScreen to live API
+- Both platforms now use correct snake_case field names from backend
+- Mobile fallback to mock data when API unavailable
 
 See `PROJECT_PLAN.md` for detailed project documentation.
 
@@ -64,6 +91,7 @@ See `PROJECT_PLAN.md` for detailed project documentation.
 |--------|----------|-------------|
 | POST | `/api/predictions` | Submit prediction (body: `{user_id, driver_ids[x5], team_ids[x2]}`) |
 | GET | `/api/predictions/:id` | Get prediction by ID |
+| GET | `/api/predictions/user/:userId` | Get all predictions for a user |
 
 ### UI-Web (React.js) - COMPLETE
 - **Admin Page**: Add/edit drivers and teams

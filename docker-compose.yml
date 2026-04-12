@@ -1,31 +1,49 @@
-# Docker Compose configuration for F1 Tipping App
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: f1tipping-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_DB: ${DB_NAME:-f1_prediction}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-f1_prediction}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - f1-tipping-network
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: f1-tipping-backend
+    container_name: f1tipping-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      - PORT=8080
-    restart: unless-stopped
-    networks:
-      - f1-tipping-network
-
-  web:
-    build:
-      context: ./UI-web
-      dockerfile: Dockerfile
-    container_name: f1-tipping-web
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-f1_prediction}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
     networks:
       - f1-tipping-network
 
 networks:
   f1-tipping-network:
     driver: bridge
+
+volumes:
+  postgres_data:

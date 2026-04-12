@@ -24,7 +24,7 @@ function UserPage() {
   };
 
   const loadMyPredictions = () => {
-    API.get('/api/predictions/my-user').then(setMyPredictions);
+    API.get('predictions/user/my-user').then(setMyPredictions);
   };
 
   const handleSubmit = (e) => {
@@ -75,7 +75,7 @@ function UserPage() {
                   />
                 </td>
                 <td style={{ padding: '10px' }}>{driver.name}</td>
-                <td style={{ padding: '10px' }}>{driver.constructorName}</td>
+                <td style={{ padding: '10px' }}>{driver.constructor_name}</td>
               </tr>
             ))}
           </tbody>
@@ -148,11 +148,11 @@ function UserPage() {
                 backgroundColor: '#f9f9f9',
                 ...resultColor,
               }}>
-                <div><strong>Drivers:</strong> {pred.driver_ids.join(', ')}</div>
-                <div><strong>Teams:</strong> {pred.team_ids.join(', ')}</div>
-                <div><strong>Sprint Points:</strong> {pred.sprint_points}</div>
-                <div><strong>Race Points:</strong> {pred.race_points}</div>
-                <div><strong>Total Points:</strong> {pred.totalPoints}</div>
+                <div><strong>Drivers:</strong> {pred.driver_ids?.join(', ') || 'N/A'}</div>
+                <div><strong>Teams:</strong> {pred.team_ids?.join(', ') || 'N/A'}</div>
+                <div><strong>Sprint Points:</strong> {pred.sprint_points || 0}</div>
+                <div><strong>Race Points:</strong> {pred.race_points || 0}</div>
+                <div><strong>Total Points:</strong> {pred.total_points || 0}</div>
               </div>
             );
           })

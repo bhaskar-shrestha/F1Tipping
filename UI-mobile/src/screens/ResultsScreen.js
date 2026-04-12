@@ -5,18 +5,30 @@ export default function ResultsScreen() {
   const [results, setResults] = React.useState([]);
 
   React.useEffect(() => {
-    // In real app: fetch results from API
-    setResults([
-      {
-        id: 'r1',
-        drivers: 'Max Verstappen, Sergio Perez, Charles Leclerc, Carlos Sainz, Lewis Hamilton',
-        teams: 'Red Bull, Ferrari',
-        sprintPoints: 25,
-        racePoints: 60,
-        totalPoints: 85,
-      },
-    ]);
+    fetchResults();
   }, []);
+
+  const fetchResults = async () => {
+    try {
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+      const response = await fetch(`${API_URL}/api/predictions/user/my-user`);
+      const data = await response.json();
+      setResults(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading results:', error);
+      // Fallback mock data
+      setResults([
+        {
+          id: 'r1',
+          driver_ids: ['d1', 'd3', 'd5', 'd7', 'd9'],
+          team_ids: ['t1', 't2'],
+          sprint_points: 25,
+          race_points: 60,
+          total_points: 85,
+        },
+      ]);
+    }
+  };
 
   const getPointsColor = (points) => {
     if (points >= 50) return '#4caf50';
@@ -35,32 +47,32 @@ export default function ResultsScreen() {
           <View key={result.id} style={styles.card}>
             <Text style={styles.sectionTitle}>Prediction</Text>
             <Text style={styles.driversText}>
-              Drivers: {result.drivers}
+              Drivers: {result.driver_ids?.join(', ') || 'N/A'}
             </Text>
             <Text style={styles.teamsText}>
-              Teams: {result.teams}
+              Teams: {result.team_ids?.join(', ') || 'N/A'}
             </Text>
 
             <Text style={styles.sectionTitle}>Points</Text>
             <View style={styles.pointsRow}>
               <View style={styles.pointsBox}>
                 <Text style={styles.pointsLabel}>Sprint</Text>
-                <Text style={[styles.pointsValue, { color: getPointsColor(result.sprintPoints) }]}>
-                  {result.sprintPoints}
+                <Text style={[styles.pointsValue, { color: getPointsColor(result.sprint_points) }]}>
+                  {result.sprint_points || 0}
                 </Text>
               </View>
               <View style={styles.pointsBox}>
                 <Text style={styles.pointsLabel}>Race</Text>
-                <Text style={[styles.pointsValue, { color: getPointsColor(result.racePoints) }]}>
-                  {result.racePoints}
+                <Text style={[styles.pointsValue, { color: getPointsColor(result.race_points) }]}>
+                  {result.race_points || 0}
                 </Text>
               </View>
             </View>
 
             <View style={styles.totalPointsBox}>
               <Text style={styles.totalPointsLabel}>Total Points</Text>
-              <Text style={[styles.totalPointsValue, { color: getPointsColor(result.totalPoints) }]}>
-                {result.totalPoints}
+              <Text style={[styles.totalPointsValue, { color: getPointsColor(result.total_points) }]}>
+                {result.total_points || 0}
               </Text>
             </View>
           </View>

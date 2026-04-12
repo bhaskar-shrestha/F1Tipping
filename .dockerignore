@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.log
+tmp/
+temp/
+*.tmp

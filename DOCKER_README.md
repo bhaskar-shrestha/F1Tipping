@@ -44,6 +44,19 @@ curl -X POST http://localhost:8080/api/admin/drivers \
 curl -X POST http://localhost:8080/api/predictions \
   -H "Content-Type: application/json" \
   -d '{"user_id":"user1","driver_ids":["ver","nor","pi","alp","sar"],"team_ids":["redbull","mcl"]}'
+
+# Get predictions for a user
+curl http://localhost:8080/api/predictions/user/user1
+
+# Update race positions
+curl -X POST http://localhost:8080/api/admin/race-positions \
+  -H "Content-Type: application/json" \
+  -d '{"constructor_id":"team_Red Bull","car1":1,"car2":2}'
+
+# Update sprint positions
+curl -X POST http://localhost:8080/api/admin/sprint-positions \
+  -H "Content-Type: application/json" \
+  -d '{"constructor_id":"team_Red Bull","car1":1,"car2":2}'
 ```
 
 ### Stop Services
