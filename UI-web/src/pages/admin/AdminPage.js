@@ -13,28 +13,42 @@ function AdminPage() {
   }, []);
 
   const loadDrivers = () => {
-    API.get('/admin/drivers').then(setDrivers);
+    API.get('/admin/drivers')
+      .then(data => setDrivers(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Failed to load drivers:', err);
+        setDrivers([]);
+      });
   };
 
   const loadTeams = () => {
-    API.get('/admin/teams').then(setTeams);
+    API.get('/admin/teams')
+      .then(data => setTeams(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Failed to load teams:', err);
+        setTeams([]);
+      });
   };
 
   const handleSubmitDriver = (e) => {
     e.preventDefault();
-    API.post('/admin/drivers', driverForm).then(() => {
-      setDriverForm({ name: '', constructorId: '', constructorName: '' });
-      loadDrivers();
-      loadTeams();
-    });
+    API.post('/admin/drivers', driverForm)
+      .then(() => {
+        setDriverForm({ name: '', constructorId: '', constructorName: '' });
+        loadDrivers();
+        loadTeams();
+      })
+      .catch(err => console.error('Failed to add driver:', err));
   };
 
   const handleSubmitTeam = (e) => {
     e.preventDefault();
-    API.post('/admin/teams', teamForm).then(() => {
-      setTeamForm({ constructorName: '' });
-      loadTeams();
-    });
+    API.post('/admin/teams', teamForm)
+      .then(() => {
+        setTeamForm({ constructorName: '' });
+        loadTeams();
+      })
+      .catch(err => console.error('Failed to add team:', err));
   };
 
   return (
