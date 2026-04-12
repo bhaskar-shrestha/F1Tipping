@@ -3,41 +3,43 @@
 # Stage 1: Build
 FROM golang:1.21-alpine AS builder
 
-WORKDIR /build
+WORKDIR /app
 
-# Install necessary packages
-RUN apk add --no-cache git
+# Install necessary build packages
+RUN apk add --no-cache git ca-certificates
 
-# Copy go mod files first for better caching
+# Copy only go.mod and go.sum for dependency caching
 COPY go.mod go.sum ./
-RUN go mod download
 
-# Copy source code
-COPY src/ ./src/
+# Cache Go module dependencies
+RUN go mod download && go mod graph
 
-# Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./src/main.go
+# Copy all source-code
+COPY . .
 
-# Stage 2: Runtime
+# Build the binary with all Go build flags
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o /app/main ./src/main.go
+
+# Stage 2: Runtime  
 FROM alpine:latest
 
 WORKDIR /app
 
-# Install necessary packages
-RUN apk add --no-cache \
-    ca-certificates \
-    tzdata \
-    bash \
-    postgresql-client
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata postgresql-client
 
 # Copy binary from builder
-COPY --from=builder /build/main /app/main
+COPY --from=builder /app/main ./main
 
-# Only set non-sensitive environment variables
+# Copy database schema to expected location
+COPY src/db ./src/db
+
+# Set environment
 ENV GIN_MODE=release
 
-# Database and sensitive configs are injected at runtime via docker-compose
 EXPOSE 8080
 
-# Run the application directly
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD [ "test", "-f", "/app/main" ]
+
 CMD ["./main"]

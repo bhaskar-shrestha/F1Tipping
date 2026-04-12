@@ -33,7 +33,6 @@ func (r *TeamRepository) GetAll() ([]models.Team, error) {
 			return nil, fmt.Errorf("failed to scan constructor: %w", err)
 		}
 		t.ID = constructorID
-		t.ConstructorID = constructorID
 		t.ConstructorName = name
 		t.RaceCar1Position = nil
 		t.RaceCar2Position = nil
@@ -55,7 +54,6 @@ func (r *TeamRepository) GetByID(id string) (*models.Team, error) {
 		return nil, fmt.Errorf("failed to get constructor by id: %w", err)
 	}
 	t.ID = constructorID
-	t.ConstructorID = constructorID
 	t.ConstructorName = name
 	t.RaceCar1Position = nil
 	t.RaceCar2Position = nil
@@ -69,8 +67,8 @@ func (r *TeamRepository) GetByID(id string) (*models.Team, error) {
 func (r *TeamRepository) Create(team *models.Team) error {
 	err := r.db.QueryRow(
 		"INSERT INTO constructors (constructor_id, constructor_name) VALUES ($1, $2) RETURNING constructor_id, constructor_name",
-		team.ConstructorID, team.ConstructorName,
-	).Scan(&team.ConstructorID, &team.ConstructorName)
+		team.ID, team.ConstructorName,
+	).Scan(&team.ID, &team.ConstructorName)
 	if err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
 	}
@@ -155,7 +153,6 @@ func (r *TeamRepository) GetTeamWithPositions(constructorID string) (*models.Tea
 	}
 
 	t.ID = constructorIDStr
-	t.ConstructorID = constructorIDStr
 	t.ConstructorName = name
 
 	t.RaceCar1Position = nil

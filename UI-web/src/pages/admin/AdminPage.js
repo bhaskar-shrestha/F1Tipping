@@ -4,7 +4,7 @@ import API from '../../api';
 function AdminPage() {
   const [drivers, setDrivers] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [driverForm, setDriverForm] = useState({ name: '', constructorId: '', constructorName: '' });
+  const [driverForm, setDriverForm] = useState({ name: '', constructor_id: '', constructor_name: '' });
   const [teamForm, setTeamForm] = useState({ constructorName: '' });
 
   useEffect(() => {
@@ -23,7 +23,7 @@ function AdminPage() {
   const handleSubmitDriver = (e) => {
     e.preventDefault();
     API.post('/api/admin/drivers', driverForm).then(() => {
-      setDriverForm({ name: '', constructorId: '', constructorName: '' });
+      setDriverForm({ name: '', constructor_id: '', constructor_name: '' });
       loadDrivers();
       loadTeams();
     });
@@ -56,15 +56,15 @@ function AdminPage() {
             <input
               type="text"
               placeholder="Constructor ID"
-              value={driverForm.constructorId}
-              onChange={(e) => setDriverForm({ ...driverForm, constructorId: e.target.value })}
+              value={driverForm.constructor_id}
+              onChange={(e) => setDriverForm({ ...driverForm, constructor_id: e.target.value })}
               required
             />
             <input
               type="text"
               placeholder="Constructor Name"
-              value={driverForm.constructorName}
-              onChange={(e) => setDriverForm({ ...driverForm, constructorName: e.target.value })}
+              value={driverForm.constructor_name}
+              onChange={(e) => setDriverForm({ ...driverForm, constructor_name: e.target.value })}
               required
             />
             <button type="submit">Add Driver</button>
@@ -101,7 +101,7 @@ function AdminPage() {
             {drivers.map((driver) => (
               <tr key={driver.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '10px' }}>{driver.name}</td>
-                <td style={{ padding: '10px' }}>{driver.constructorId}</td>
+                <td style={{ padding: '10px' }}>{driver.constructor_id}</td>
               </tr>
             ))}
           </tbody>
@@ -121,8 +121,8 @@ function AdminPage() {
           <tbody>
             {teams.map((team) => (
               <tr key={team.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '10px' }}>{team.constructorName}</td>
-                <td style={{ padding: '10px' }}>{team.constructorId}</td>
+                <td style={{ padding: '10px' }}>{team.constructor_name}</td>
+                <td style={{ padding: '10px' }}>{team.id}</td>
               </tr>
             ))}
           </tbody>

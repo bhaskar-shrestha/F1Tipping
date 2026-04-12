@@ -122,21 +122,26 @@ Both cars from the same constructor accumulate points separately.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/predictions` | Submit prediction (5 drivers + 2 teams) |
-| GET | `/api/predictions/:id` | Get prediction details |
+| GET | `/api/predictions/:id` | Get prediction by ID |
+| GET | `/api/predictions/user/:userId` | Get all predictions for a user |
 
-## Example API Request
+## Database Schema
 
-```bash
-# Submit prediction
-POST /api/predictions
-Content-Type: application/json
+The application uses PostgreSQL with the following key tables:
 
-{
-  "user_id": "user123",
-  "driver_ids": ["d1", "d2", "d3", "d4", "d5"],
-  "team_ids": ["t1", "t2"]
-}
-```
+- **drivers** - Driver information with constructor assignments
+- **constructors** - Team/constructor data (using `constructor_id` as primary key)
+- **predictions** - User predictions for races (stores driver_ids and team_ids as arrays)
+- **sprint_results** - Sprint race results by constructor position
+- **race_results** - Race results by constructor position
+- **races** - F1 2026 race calendar (sprint and main races)
+
+2026 Race Calendar:
+- **22 Total Races** (14 race weekends)
+- **6 Sprint Weekends**: China, Miami, Canada, Britain, Netherlands, Singapore
+- **Automatic Seeding**: 28 race records seeded on startup (14 races × 2 types: sprint + main)
+
+For detailed schema, see [schema.sql](backend/src/db/schema.sql).
 
 ## Development
 

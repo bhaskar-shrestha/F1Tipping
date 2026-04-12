@@ -59,8 +59,9 @@ func (s *AdminService) GetAllDrivers() ([]models.Driver, error) {
 
 // AddTeam adds a new team (constructor)
 func (s *AdminService) AddTeam(constructorName string) (*models.Team, error) {
+	teamID := fmt.Sprintf("team_%s", constructorName)
 	team := &models.Team{
-		ConstructorID:      fmt.Sprintf("team_%s", constructorName),
+		ID:                 teamID,
 		ConstructorName:    constructorName,
 		RaceCar1Position:   nil,
 		RaceCar2Position:   nil,
@@ -74,11 +75,10 @@ func (s *AdminService) AddTeam(constructorName string) (*models.Team, error) {
 	}
 
 	// Update team with info from database
-	updatedTeam, err := s.teamsRepo.GetByID(team.ConstructorID)
+	updatedTeam, err := s.teamsRepo.GetByID(teamID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh team: %w", err)
 	}
-	updatedTeam.ID = team.ID
 
 	return updatedTeam, nil
 }

@@ -7,6 +7,28 @@ export default function TeamSelectionScreen({ navigation }) {
   const [teams, setTeams] = React.useState([]);
   const [selectedTeams, setSelectedTeams] = React.useState([]);
 
+  React.useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/admin/teams');
+      const data = await response.json();
+      setTeams(data);
+    } catch (error) {
+      console.error('Error loading teams:', error);
+      // Fallback mock data
+      setTeams([
+        { id: 't1', constructor_name: 'Red Bull' },
+        { id: 't2', constructor_name: 'Ferrari' },
+        { id: 't3', constructor_name: 'Mercedes' },
+        { id: 't4', constructor_name: 'McLaren' },
+        { id: 't5', constructor_name: 'Aston Martin' },
+      ]);
+    }
+  };
+
   const toggleTeam = (teamId) => {
     if (selectedTeams.length < 2) {
       if (selectedTeams.includes(teamId)) {
@@ -25,27 +47,18 @@ export default function TeamSelectionScreen({ navigation }) {
     }
   };
 
-  const teamsList = [
-    { id: 't1', name: 'Red Bull', constructorId: 'c1' },
-    { id: 't2', name: 'Ferrari', constructorId: 'c2' },
-    { id: 't3', name: 'Mercedes', constructorId: 'c3' },
-    { id: 't4', name: 'McLaren', constructorId: 'c4' },
-    { id: 't5', name: 'Aston Martin', constructorId: 'c5' },
-  ];
-
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Select 2 Teams</Text>
 
       <ScrollView style={styles.teamList}>
-        {teamsList.map(team => (
+        {teams.map(team => (
           <TouchableOpacity
             key={team.id}
             style={[styles.teamItem, selectedTeams.includes(team.id) && styles.selectedItem]}
             onPress={() => toggleTeam(team.id)}
           >
-            <Text style={styles.teamName}>{team.name}</Text>
-            <Text style={styles.constructorId}>{team.constructorId}</Text>
+            <Text style={styles.teamName}>{team.constructor_name}</Text>
             {selectedTeams.includes(team.id) && (
               <Text style={styles.checkmark}>✓</Text>
             )}

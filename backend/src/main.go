@@ -102,50 +102,31 @@ func initDB() error {
 }
 
 func createSchema() error {
-	schema := `
--- Create constructors/teams table
-CREATE TABLE IF NOT EXISTS constructors (
-    id SERIAL PRIMARY KEY,
-    constructor_id VARCHAR(50) UNIQUE NOT NULL,
-    constructor_name VARCHAR(100) NOT NULL,
-    race_car1_position INTEGER,
-    race_car2_position INTEGER,
-    sprint_car1_position INTEGER,
-    sprint_car2_position INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+	// Load schema from authoritative schema.sql file instead of hardcoding
+	// Try multiple paths for different execution contexts (local, Docker, etc.)
+	schemaPaths := []string{
+		"src/db/schema.sql",           // Docker: /app runs with this path
+		"backend/src/db/schema.sql",   // Local: running from project root
+		"/app/src/db/schema.sql",      // Absolute Docker path
+	}
+	
+	var schemaData []byte
+	var err error
+	
+	for _, path := range schemaPaths {
+		schemaData, err = os.ReadFile(path)
+		if err == nil {
+			log.Printf("Loaded schema from: %s", path)
+			break
+		}
+	}
+	
+	if err != nil {
+		return fmt.Errorf("failed to read schema file from any of: %v: %w", schemaPaths, err)
+	}
 
--- Create drivers table
-CREATE TABLE IF NOT EXISTS drivers (
-    id SERIAL PRIMARY KEY,
-    driver_id VARCHAR(50) UNIQUE NOT NULL,
-    driver_name VARCHAR(100) NOT NULL,
-    constructor_id VARCHAR(50) REFERENCES constructors(constructor_id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create predictions table
-CREATE TABLE IF NOT EXISTS predictions (
-    id SERIAL PRIMARY KEY,
-    user_id VARCHAR(100) NOT NULL,
-    submit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    sprint_points INTEGER DEFAULT 0,
-    race_points INTEGER DEFAULT 0,
-    total_points INTEGER DEFAULT 0,
-    driver_ids TEXT[],
-    team_ids TEXT[],
-    UNIQUE(user_id, submit_time)
-);
-
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_drivers_constructor ON drivers(constructor_id);
-CREATE INDEX IF NOT EXISTS idx_predictions_user ON predictions(user_id);
-CREATE INDEX IF NOT EXISTS idx_predictions_submit ON predictions(submit_time);
-CREATE INDEX IF NOT EXISTS idx_constructors_id ON constructors(id);
-`
-
-	_, err := DB.Exec(schema)
+	schema := string(schemaData)
+	_, err = DB.Exec(schema)
 	if err != nil {
 		return fmt.Errorf("failed to create schema: %w", err)
 	}
@@ -316,6 +297,54 @@ func loadInitialData() error {
 					log.Printf("Warning: Failed to insert driver %s: %v", driver.name, err)
 				}
 			}
+		}
+	}
+
+	// Load 2026 races calendar
+	log.Println("Loading 2026 F1 race calendar...")
+	races2026 := []struct {
+		name string
+		date string
+		typ  string
+	}{
+		// First half
+		{"Chinese GP", "2026-03-15", "sprint"},
+		{"Chinese GP", "2026-03-16", "main"},
+		{"Miami GP", "2026-04-05", "sprint"},
+		{"Miami GP", "2026-04-06", "main"},
+		{"Canadian GP", "2026-04-19", "sprint"},
+		{"Canadian GP", "2026-04-20", "main"},
+		{"British GP", "2026-05-03", "sprint"},
+		{"British GP", "2026-05-04", "main"},
+		{"Dutch GP", "2026-05-24", "sprint"},
+		{"Dutch GP", "2026-05-25", "main"},
+		{"Singapore GP", "2026-09-20", "sprint"},
+		{"Singapore GP", "2026-09-21", "main"},
+		// Additional races (main races without sprints unless specified)
+		{"Bahrain GP", "2026-03-01", "main"},
+		{"Saudi Arabian GP", "2026-03-08", "main"},
+		{"Monaco GP", "2026-05-17", "main"},
+		{"Australian GP", "2026-03-22", "main"},
+		{"Indian GP", "2026-03-29", "main"},
+		{"French GP", "2026-06-07", "main"},
+		{"Hungarian GP", "2026-07-12", "main"},
+		{"Belgian GP", "2026-08-02", "main"},
+		{"Italian GP", "2026-09-06", "main"},
+		{"USA GP", "2026-10-04", "main"},
+		{"Mexico City GP", "2026-10-18", "main"},
+		{"Japan GP", "2026-10-11", "main"},
+		{"Qatar GP", "2026-11-01", "main"},
+		{"Abu Dhabi GP", "2026-12-13", "main"},
+	}
+
+	for _, race := range races2026 {
+		_, err := DB.Exec(
+			`INSERT INTO races (race_name, race_date, race_type, season, is_active) 
+			 VALUES ($1, $2, $3, $4, $5) ON CONFLICT (season, race_name, race_type) DO NOTHING`,
+			race.name, race.date, race.typ, 2026, true,
+		)
+		if err != nil {
+			log.Printf("Warning: Failed to insert race %s %s: %v", race.name, race.typ, err)
 		}
 	}
 
@@ -557,13 +586,38 @@ func userCreatePrediction(w http.ResponseWriter, r *http.Request) {
 }
 
 func userGetPrediction(w http.ResponseWriter, r *http.Request) {
-	predID := strings.TrimPrefix(r.URL.Path, "/api/predictions/")
-	if predID == "" {
-		http.Error(w, "Prediction ID required", http.StatusBadRequest)
+	// Extract the path after /api/predictions/
+	path := strings.TrimPrefix(r.URL.Path, "/api/predictions/")
+	
+	if path == "" {
+		http.Error(w, "Prediction ID or /user/:userId required", http.StatusBadRequest)
 		return
 	}
 
-	prediction, err := Preds.GetPrediction(predID)
+	// Check if this is a user predictions request
+	if strings.HasPrefix(path, "user/") {
+		userID := strings.TrimPrefix(path, "user/")
+		if userID == "" {
+			http.Error(w, "User ID required", http.StatusBadRequest)
+			return
+		}
+
+		predictions, err := Preds.GetPredictionsByUser(userID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get predictions: %v", err), http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "  ")
+		encoder.Encode(predictions)
+		return
+	}
+
+	// Otherwise treat as prediction ID
+	prediction, err := Preds.GetPrediction(path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get prediction: %v", err), http.StatusNotFound)
 		return

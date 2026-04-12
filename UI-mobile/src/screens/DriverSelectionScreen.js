@@ -15,19 +15,22 @@ export default function DriverSelectionScreen({ navigation }) {
 
   const fetchDrivers = async () => {
     try {
-      // In real app: API.get('/api/admin/drivers')
-      setDrivers([
-        { id: 'd1', name: 'Max Verstappen', constructorName: 'Red Bull' },
-        { id: 'd2', name: 'Sergio Perez', constructorName: 'Red Bull' },
-        { id: 'd3', name: 'Charles Leclerc', constructorName: 'Ferrari' },
-        { id: 'd4', name: 'Carlos Sainz', constructorName: 'Ferrari' },
-        { id: 'd5', name: 'Lewis Hamilton', constructorName: 'Mercedes' },
-        { id: 'd6', name: 'George Russell', constructorName: 'Mercedes' },
-        { id: 'd7', name: 'Lando Norris', constructorName: 'McLaren' },
-        { id: 'd8', name: 'Oscar Piastri', constructorName: 'McLaren' },
-      ]);
+      const response = await fetch('http://localhost:8080/api/admin/drivers');
+      const data = await response.json();
+      setDrivers(data);
     } catch (error) {
       console.error('Error loading drivers:', error);
+      // Fallback mock data
+      setDrivers([
+        { id: 'd1', name: 'Max Verstappen', constructor_name: 'Red Bull' },
+        { id: 'd2', name: 'Sergio Perez', constructor_name: 'Red Bull' },
+        { id: 'd3', name: 'Charles Leclerc', constructor_name: 'Ferrari' },
+        { id: 'd4', name: 'Carlos Sainz', constructor_name: 'Ferrari' },
+        { id: 'd5', name: 'Lewis Hamilton', constructor_name: 'Mercedes' },
+        { id: 'd6', name: 'George Russell', constructor_name: 'Mercedes' },
+        { id: 'd7', name: 'Lando Norris', constructor_name: 'McLaren' },
+        { id: 'd8', name: 'Oscar Piastri', constructor_name: 'McLaren' },
+      ]);
     }
   };
 
@@ -61,7 +64,7 @@ export default function DriverSelectionScreen({ navigation }) {
             onPress={() => toggleDriver(driver.id)}
           >
             <Text style={styles.driverName}>{driver.name}</Text>
-            <Text style={styles.constructorName}>{driver.constructorName}</Text>
+            <Text style={styles.constructorName}>{driver.constructor_name}</Text>
             {selectedDrivers.includes(driver.id) && (
               <Text style={styles.checkmark}>✓</Text>
             )}
