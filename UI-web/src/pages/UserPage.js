@@ -16,15 +16,34 @@ function UserPage() {
   }, []);
 
   const loadDriverList = () => {
-    API.get('/admin/drivers').then(setDriverList);
+    API.get('/admin/drivers')
+      .then(data => setDriverList(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Failed to load drivers:', err);
+        setDriverList([]);
+      });
   };
 
   const loadTeamList = () => {
-    API.get('/admin/teams').then(setTeamList);
+    API.get('/admin/teams')
+      .then(data => setTeamList(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Failed to load teams:', err);
+        setTeamList([]);
+      });
   };
 
   const loadMyPredictions = () => {
-    API.get('/predictions/my-user').then(setMyPredictions);
+    API.get('/predictions/user/my-user')
+      .then(data => {
+        // API returns array or single object, normalize to array
+        setMyPredictions(Array.isArray(data) ? data : (data ? [data] : []));
+      })
+      .catch(err => {
+        console.error('Failed to load predictions:', err);
+        // 404 is expected if user has no predictions yet
+        setMyPredictions([]);
+      });
   };
 
   const handleSubmit = (e) => {
@@ -33,10 +52,17 @@ function UserPage() {
       user_id: 'my-user',
       driver_ids: selectedDrivers.map(d => d.id),
       team_ids: selectedTeams.map(t => t.id),
-    }).then(() => {
-      alert('Prediction submitted!');
-      loadMyPredictions();
-    });
+    })
+      .then(() => {
+        alert('Prediction submitted!');
+        setSelectedDrivers([]);
+        setSelectedTeams([]);
+        loadMyPredictions();
+      })
+      .catch(err => {
+        console.error('Failed to submit prediction:', err);
+        alert('Error submitting prediction. Please check the console for details.');
+      });
   };
 
   const getResultColor = (points) => {
