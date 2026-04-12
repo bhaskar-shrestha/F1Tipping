@@ -25,8 +25,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata postgresql-client
+# Install runtime dependencies (ca-certificates for HTTPS, tzdata for timezone support)
+RUN apk add --no-cache ca-certificates tzdata
 
 # Copy binary from builder
 COPY --from=builder /app/main ./main
