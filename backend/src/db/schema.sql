@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS drivers (
     id SERIAL PRIMARY KEY,
     driver_id VARCHAR(50) UNIQUE NOT NULL,
     driver_name VARCHAR(100) NOT NULL,
-    constructor_id INTEGER REFERENCES constructors(id) ON DELETE CASCADE,
+    constructor_id VARCHAR(50) REFERENCES constructors(constructor_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
