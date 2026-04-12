@@ -13,17 +13,17 @@ function AdminPage() {
   }, []);
 
   const loadDrivers = () => {
-    API.get('/api/admin/drivers').then(setDrivers);
+    API.get('/admin/drivers').then(setDrivers);
   };
 
   const loadTeams = () => {
-    API.get('/api/admin/teams').then(setTeams);
+    API.get('/admin/teams').then(setTeams);
   };
 
   const handleSubmitDriver = (e) => {
     e.preventDefault();
-    API.post('/api/admin/drivers', driverForm).then(() => {
-      setDriverForm({ name: '', constructor_id: '', constructor_name: '' });
+    API.post('/admin/drivers', driverForm).then(() => {
+      setDriverForm({ name: '', constructorId: '', constructorName: '' });
       loadDrivers();
       loadTeams();
     });
@@ -31,7 +31,7 @@ function AdminPage() {
 
   const handleSubmitTeam = (e) => {
     e.preventDefault();
-    API.post('/api/admin/teams', teamForm).then(() => {
+    API.post('/admin/teams', teamForm).then(() => {
       setTeamForm({ constructorName: '' });
       loadTeams();
     });

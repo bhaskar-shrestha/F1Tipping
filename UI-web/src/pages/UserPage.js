@@ -16,20 +16,20 @@ function UserPage() {
   }, []);
 
   const loadDriverList = () => {
-    API.get('/api/admin/drivers').then(setDriverList);
+    API.get('/admin/drivers').then(setDriverList);
   };
 
   const loadTeamList = () => {
-    API.get('/api/admin/teams').then(setTeamList);
+    API.get('/admin/teams').then(setTeamList);
   };
 
   const loadMyPredictions = () => {
-    API.get('predictions/user/my-user').then(setMyPredictions);
+    API.get('/predictions/my-user').then(setMyPredictions);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    API.post('/api/predictions', {
+    API.post('/predictions', {
       user_id: 'my-user',
       driver_ids: selectedDrivers.map(d => d.id),
       team_ids: selectedTeams.map(t => t.id),
