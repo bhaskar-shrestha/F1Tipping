@@ -52,7 +52,7 @@ export default function DriverSelectionScreen({ navigation }) {
 
   const submitSelection = () => {
     if (selectedDrivers.length === 5) {
-      navigation.navigate('TeamSelection');
+      navigation.navigate('TeamSelection', { selectedDrivers });
     }
   };
 

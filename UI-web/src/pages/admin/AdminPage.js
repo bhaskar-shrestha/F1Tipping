@@ -5,7 +5,11 @@ function AdminPage() {
   const [drivers, setDrivers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [driverForm, setDriverForm] = useState({ name: '', constructor_id: '', constructor_name: '' });
-  const [teamForm, setTeamForm] = useState({ constructorName: '' });
+  const [teamForm, setTeamForm] = useState({ constructor_name: '' });
+  const [driverError, setDriverError] = useState('');
+  const [teamError, setTeamError] = useState('');
+  const [driverSuccess, setDriverSuccess] = useState('');
+  const [teamSuccess, setTeamSuccess] = useState('');
 
   useEffect(() => {
     loadDrivers();
@@ -32,24 +36,63 @@ function AdminPage() {
 
   const handleSubmitDriver = (e) => {
     e.preventDefault();
+    setDriverError('');
+    setDriverSuccess('');
+
     API.post('/admin/drivers', driverForm)
       .then(() => {
-        setDriverForm({ name: '', constructorId: '', constructorName: '' });
+        setDriverForm({ name: '', constructor_id: '', constructor_name: '' });
+        setDriverSuccess('Driver added successfully!');
         loadDrivers();
         loadTeams();
+        // Clear success message after 3 seconds
+        setTimeout(() => setDriverSuccess(''), 3000);
       })
-      .catch(err => console.error('Failed to add driver:', err));
+      .catch(err => {
+        console.error('Failed to add driver:', err);
+        if (err.status === 400) {
+          setDriverError(`Validation error: ${err.data || err.message}`);
+        } else if (err.status === 404) {
+          setDriverError('Endpoint not found.');
+        } else {
+          setDriverError(`Error adding driver: ${err.message}`);
+        }
+      });
   };
 
   const handleSubmitTeam = (e) => {
     e.preventDefault();
+    setTeamError('');
+    setTeamSuccess('');
+
     API.post('/admin/teams', teamForm)
       .then(() => {
-        setTeamForm({ constructorName: '' });
+        setTeamForm({ constructor_name: '' });
+        setTeamSuccess('Team added successfully!');
         loadTeams();
+        // Clear success message after 3 seconds
+        setTimeout(() => setTeamSuccess(''), 3000);
       })
-      .catch(err => console.error('Failed to add team:', err));
+      .catch(err => {
+        console.error('Failed to add team:', err);
+        if (err.status === 400) {
+          setTeamError(`Validation error: ${err.data || err.message}`);
+        } else if (err.status === 404) {
+          setTeamError('Endpoint not found.');
+        } else {
+          setTeamError(`Error adding team: ${err.message}`);
+        }
+      });
   };
+
+  const messageStyle = (type) => ({
+    padding: '12px',
+    marginBottom: '12px',
+    borderRadius: '4px',
+    border: `1px solid ${type === 'error' ? '#ef5350' : '#81c784'}`,
+    backgroundColor: type === 'error' ? '#ffebee' : '#e8f5e9',
+    color: type === 'error' ? '#c62828' : '#2e7d32',
+  });
 
   return (
     <div>
@@ -59,6 +102,8 @@ function AdminPage() {
         {/* Add Driver Form */}
         <div style={{ flex: 1 }}>
           <h3>Add Driver</h3>
+          {driverError && <div style={messageStyle('error')}>{driverError}</div>}
+          {driverSuccess && <div style={messageStyle('success')}>{driverSuccess}</div>}
           <form onSubmit={handleSubmitDriver} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input
               type="text"
@@ -88,12 +133,14 @@ function AdminPage() {
         {/* Add Team Form */}
         <div style={{ flex: 1 }}>
           <h3>Add Team</h3>
+          {teamError && <div style={messageStyle('error')}>{teamError}</div>}
+          {teamSuccess && <div style={messageStyle('success')}>{teamSuccess}</div>}
           <form onSubmit={handleSubmitTeam} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input
               type="text"
               placeholder="Constructor Name"
-              value={teamForm.constructorName}
-              onChange={(e) => setTeamForm({ constructorName: e.target.value })}
+              value={teamForm.constructor_name}
+              onChange={(e) => setTeamForm({ constructor_name: e.target.value })}
               required
             />
             <button type="submit">Add Team</button>

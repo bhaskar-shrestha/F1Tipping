@@ -8,12 +8,30 @@ const getApiUrl = () => {
   return 'http://localhost:8080/api';
 };
 
+// Custom error class to preserve HTTP status
+class APIError extends Error {
+  constructor(status, message, data) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
 const API = {
   get: (endpoint) => {
     const url = `${getApiUrl()}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
     return fetch(url)
       .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        if (!res.ok) {
+          return res.text().then(text => {
+            const err = new APIError(
+              res.status,
+              `HTTP ${res.status}: ${res.statusText}`,
+              text
+            );
+            throw err;
+          });
+        }
         return res.json();
       })
       .catch(err => {
@@ -29,7 +47,16 @@ const API = {
       body: JSON.stringify(data),
     })
       .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        if (!res.ok) {
+          return res.text().then(text => {
+            const err = new APIError(
+              res.status,
+              `HTTP ${res.status}: ${res.statusText}`,
+              text
+            );
+            throw err;
+          });
+        }
         return res.json();
       })
       .catch(err => {
