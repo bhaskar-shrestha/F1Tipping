@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Dimensions
 
 const { width } = Dimensions.get('window');
 
-export default function TeamSelectionScreen({ navigation }) {
+export default function TeamSelectionScreen({ navigation, route }) {
   const [teams, setTeams] = React.useState([]);
   const [selectedTeams, setSelectedTeams] = React.useState([]);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   React.useEffect(() => {
     fetchTeams();
@@ -15,8 +16,11 @@ export default function TeamSelectionScreen({ navigation }) {
     try {
       const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
       const response = await fetch(`${API_URL}/api/admin/teams`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
-      setTeams(data);
+      setTeams(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading teams:', error);
       // Fallback mock data
@@ -42,9 +46,56 @@ export default function TeamSelectionScreen({ navigation }) {
     }
   };
 
-  const submitSelection = () => {
-    if (selectedTeams.length === 2) {
+  const submitPrediction = async () => {
+    if (selectedTeams.length !== 2) {
+      Alert.alert('Error', 'Please select exactly 2 teams');
+      return;
+    }
+
+    // Get driver IDs from route params (passed from DriverSelectionScreen)
+    const selectedDriverIds = route.params?.selectedDrivers || [];
+    if (selectedDriverIds.length !== 5) {
+      Alert.alert('Error', 'Invalid driver selection');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+      const response = await fetch(`${API_URL}/api/predictions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'my-user',
+          driver_ids: selectedDriverIds,
+          team_ids: selectedTeams,
+        }),
+      });
+
+      if (!response.ok) {
+        // Handle different error statuses
+        if (response.status === 400) {
+          const errorText = await response.text();
+          Alert.alert('Validation Error', errorText || 'Invalid input. Please check your selections.');
+          setIsSubmitting(false);
+          return;
+        } else if (response.status === 404) {
+          Alert.alert('Error', 'Server endpoint not found. Please try again later.');
+          setIsSubmitting(false);
+          return;
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      // Success - navigate to Results
+      Alert.alert('Success', 'Prediction submitted successfully!');
       navigation.navigate('Results');
+    } catch (error) {
+      console.error('Error submitting prediction:', error);
+      Alert.alert('Error', `Failed to submit prediction: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -67,8 +118,14 @@ export default function TeamSelectionScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      <TouchableOpacity style={styles.submitButton} onPress={submitSelection}>
-        <Text style={styles.submitButtonText}>Submit Prediction</Text>
+      <TouchableOpacity 
+        style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
+        onPress={submitPrediction}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.submitButtonText}>
+          {isSubmitting ? 'Submitting...' : 'Submit Prediction'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -122,5 +179,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
 });

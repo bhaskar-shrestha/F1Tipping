@@ -1,26 +1,69 @@
-// Get API base URL from environment variable with smart fallback
 const getApiUrl = () => {
-  // If explicitly set in env vars, use that
   if (process.env.REACT_APP_API_BASE_URL) {
     return process.env.REACT_APP_API_BASE_URL;
   }
-  // In Docker/production (non-localhost), try relative API path
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
     return '/api';
   }
-  // For local development, use localhost:8080
   return 'http://localhost:8080/api';
 };
 
-const API_URL = getApiUrl();
+// Custom error class to preserve HTTP status
+class APIError extends Error {
+  constructor(status, message, data) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
 
 const API = {
-  get: (endpoint) => fetch(`${API_URL}/${endpoint}`).then(res => res.json()),
-  post: (endpoint, data) => fetch(`${API_URL}/${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  }).then(res => res.json()),
+  get: (endpoint) => {
+    const url = `${getApiUrl()}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+    return fetch(url)
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(text => {
+            const err = new APIError(
+              res.status,
+              `HTTP ${res.status}: ${res.statusText}`,
+              text
+            );
+            throw err;
+          });
+        }
+        return res.json();
+      })
+      .catch(err => {
+        console.error('API GET error:', url, err);
+        throw err;
+      });
+  },
+  post: (endpoint, data) => {
+    const url = `${getApiUrl()}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(text => {
+            const err = new APIError(
+              res.status,
+              `HTTP ${res.status}: ${res.statusText}`,
+              text
+            );
+            throw err;
+          });
+        }
+        return res.json();
+      })
+      .catch(err => {
+        console.error('API POST error:', url, err);
+        throw err;
+      });
+  },
 };
 
 export default API;

@@ -12,8 +12,16 @@ export default function ResultsScreen() {
     try {
       const API_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
       const response = await fetch(`${API_URL}/api/predictions/user/my-user`);
+      if (!response.ok) {
+        // 404 is expected if user has no predictions yet
+        if (response.status === 404) {
+          setResults([]);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
-      setResults(Array.isArray(data) ? data : []);
+      setResults(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (error) {
       console.error('Error loading results:', error);
       // Fallback mock data

@@ -8,6 +8,8 @@ function UserPage() {
   const [teamList, setTeamList] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [myPredictions, setMyPredictions] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadDriverList();
@@ -16,27 +18,78 @@ function UserPage() {
   }, []);
 
   const loadDriverList = () => {
-    API.get('/api/admin/drivers').then(setDriverList);
+    API.get('/admin/drivers')
+      .then(data => {
+        setDriverList(Array.isArray(data) ? data : []);
+        setErrorMessage('');
+      })
+      .catch(err => {
+        console.error('Failed to load drivers:', err);
+        setErrorMessage(`Failed to load drivers: ${err.message}`);
+        setDriverList([]);
+      });
   };
 
   const loadTeamList = () => {
-    API.get('/api/admin/teams').then(setTeamList);
+    API.get('/admin/teams')
+      .then(data => {
+        setTeamList(Array.isArray(data) ? data : []);
+        setErrorMessage('');
+      })
+      .catch(err => {
+        console.error('Failed to load teams:', err);
+        setErrorMessage(`Failed to load teams: ${err.message}`);
+        setTeamList([]);
+      });
   };
 
   const loadMyPredictions = () => {
-    API.get('predictions/user/my-user').then(setMyPredictions);
+    API.get('/predictions/user/my-user')
+      .then(data => {
+        // API returns array or single object, normalize to array
+        setMyPredictions(Array.isArray(data) ? data : (data ? [data] : []));
+      })
+      .catch(err => {
+        // 404 is expected if user has no predictions yet - silently handle
+        if (err.status === 404) {
+          setMyPredictions([]);
+        } else {
+          console.error('Failed to load predictions:', err);
+          setErrorMessage(`Failed to load predictions: ${err.message}`);
+          setMyPredictions([]);
+        }
+      });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    API.post('/api/predictions', {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    API.post('/predictions', {
       user_id: 'my-user',
       driver_ids: selectedDrivers.map(d => d.id),
       team_ids: selectedTeams.map(t => t.id),
-    }).then(() => {
-      alert('Prediction submitted!');
-      loadMyPredictions();
-    });
+    })
+      .then(() => {
+        setSuccessMessage('Prediction submitted successfully!');
+        setSelectedDrivers([]);
+        setSelectedTeams([]);
+        loadMyPredictions();
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      })
+      .catch(err => {
+        console.error('Failed to submit prediction:', err);
+        if (err.status === 400) {
+          // Validation error - show error message from server
+          setErrorMessage(`Validation error: ${err.data || err.message}`);
+        } else if (err.status === 404) {
+          setErrorMessage('Endpoint not found. Please check the server.');
+        } else {
+          setErrorMessage(`Error submitting prediction: ${err.message}`);
+        }
+      });
   };
 
   const getResultColor = (points) => {
@@ -48,6 +101,34 @@ function UserPage() {
   return (
     <div>
       <h2>User View - Select Your Predictions</h2>
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          backgroundColor: '#ffebee',
+          color: '#c62828',
+          borderRadius: '4px',
+          border: '1px solid #ef5350'
+        }}>
+          {errorMessage}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          backgroundColor: '#e8f5e9',
+          color: '#2e7d32',
+          borderRadius: '4px',
+          border: '1px solid #81c784'
+        }}>
+          {successMessage}
+        </div>
+      )}
 
       {/* Driver Selection */}
       <div style={{ marginTop: '20px' }}>
@@ -106,7 +187,7 @@ function UserPage() {
                     }}
                   />
                 </td>
-                <td style={{ padding: '10px' }}>{team.constructorName}</td>
+                <td style={{ padding: '10px' }}>{team.constructor_name}</td>
               </tr>
             ))}
           </tbody>
